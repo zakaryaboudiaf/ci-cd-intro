@@ -1,31 +1,56 @@
-name: First Interaction Response
+name: Continuous Integration Workflow
 
+# This workflow is triggered whenever a new PR is created on the main branch
 on:
-  issues:
-    types: [opened]
   pull_request:
-    types: [opened]
-  pull_request_target:
-    types: [opened]
+    branches:
+      - main
+    paths:
+      - 'web/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
 
 jobs:
-  response:
+
+  # Run unit tests to make sure everything is 👍
+  test:
+    name: 'Run unit tests'
+    defaults:
+      run:
+        shell: bash
+        # Define the working directory for all run steps in the workflow
+        working-directory: ./web
+    # Specify the OS we want the workflow to run on
     runs-on: ubuntu-latest
+    # Define the steps for this job
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/first-interaction@main
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: |
-            Hello! Thank you for filing an issue.
+    - uses: actions/checkout@v2
+      name: 'Checkout repository'
 
-            Thank you for creating an issue on this repository. The maintainer will triage it and will respond within a few days.
-          pr-message: |
-            Hello! Thank you for your contribution.
+    - name: 'Install Dependencies'
+      run: npm install
+    
+    - name: 'Run Tests'
+      run: npm run test
 
-            This repository is in READ ONLY mode. If you're trying to test the workflows, you need to create a fork of this repository to your organisation or personal account before you can run the workflows!
-            
-            If you've spotted a mistake that you'd like to see fixed, please create an issue instead. This PR will be closed shortly.
+  # Run the linter to check for code style issues
+  lint:
+    name: 'Run linter'
+    defaults:
+      run:
+        shell: bash
+        # Define the working directory for all run steps in the workflow
+        working-directory: ./web
+    runs-on: ubuntu-latest
+    steps:    
+    - uses: actions/checkout@v2
+      name: 'Checkout repository'
+    
+    - name: 'Install Dependencies'
+      run: npm install
 
-      - uses: superbrothers/close-pull-request@v3
-        if: ${{ github.event_name == 'pull_request_target' }}
+    - name: 'Run Linter'
+      run: npx standard -v
